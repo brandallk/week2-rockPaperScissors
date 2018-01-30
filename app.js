@@ -119,9 +119,7 @@ function displayWinner() {
 }
 
 function handleInput(evt) {
-    if (evt.target != document.querySelector(".reset")) {
-        game.playRound(evt.target.getAttribute("data-playerInput"));
-    }
+    game.playRound(evt.target.getAttribute("data-playerInput"));
 }
 
 function handleReset(evt) {
