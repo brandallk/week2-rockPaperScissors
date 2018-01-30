@@ -3,11 +3,6 @@ var game = {
     player1: {name: "human", wins: 0},
     player2: {name: "computer", wins: 0},
     maxRounds: 3,
-    rounds: [
-        {number: 1, winner: this.player2},
-        {number: 2, winner: this.player2},
-        {number: 3, winner: this.player2},
-    ],
     currentRound: 1,
     winner: this.player2,
     complete: false
@@ -38,27 +33,26 @@ game.playRound = function playRound(input) {
 
         this.player1.wins = (winner === this.player1) ? this.player1.wins + 1 : this.player1.wins;
         this.player2.wins = (winner === this.player2) ? this.player2.wins + 1 : this.player2.wins;
-        this.rounds[this.currentRound - 1].winner = winnerName;
 
         displayRoundWinner(this.currentRound, player1gambit, player2gambit, winnerName);
 
         if (this.player1.wins == 2) {
-            this.complete = true;
-            this.winner = this.player1.name;
-            displayWinner();
+            this.registerWinner(this.player1.name);
         } else if (this.player2.wins == 2) {
-            this.complete = true;
-            this.winner = this.player2.name;
-            displayWinner();
+            this.registerWinner(this.player2.name);
         } else if (this.currentRound < this.maxRounds) {
             this.currentRound++
 
         } else {
-            this.complete = true;
-            this.winner = this.getWinner();
-            displayWinner();
+            this.registerWinner(this.getWinner());
         }
     }
+}
+
+game.registerWinner = function registerWinner(winner) {
+    this.complete = true;
+    this.winner = winner;
+    displayWinner();
 }
 
 game.getRoundWinner = function getRoundWinner(p1gambit, p2gambit) {
@@ -97,15 +91,9 @@ game.getRoundWinner = function getRoundWinner(p1gambit, p2gambit) {
 }
 
 game.getWinner = function getWinner() {
-
-    var roundResults = this.rounds.map( round => round.winner );
-
-    var player1Wins = roundResults.filter( result => result === this.player1.name ).length;
-    var player2Wins = roundResults.filter( result => result === this.player2.name ).length;
-
-    if (player1Wins > player2Wins) {
+    if (this.player1.wins > this.player2.wins) {
         return this.player1.name;
-    } else if (player2Wins > player1Wins) {
+    } else if (this.player2.wins > this.player1.wins) {
         return this.player2.name;
     } else {
         return "draw";
@@ -117,9 +105,6 @@ game.reset = function reset() {
     this.player1.wins = 0;
     this.player2.wins = 0;
     this.winner = this.player2;
-    this.rounds.forEach( round => {
-        round.winner = this.player2;
-    });
     this.complete = false;
 }
 
@@ -134,7 +119,7 @@ function displayWinner() {
 }
 
 function handleInput(evt) {
-    if(evt.target != document.querySelector(".reset")) {
+    if (evt.target != document.querySelector(".reset")) {
         game.playRound(evt.target.getAttribute("data-playerInput"));
     }
 }
