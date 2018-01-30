@@ -1,7 +1,7 @@
 
 var game = {
-    player1: "human",
-    player2: "computer",
+    player1: {name: "human", wins: 0},
+    player2: {name: "computer", wins: 0},
     maxRounds: 3,
     rounds: [
         {number: 1, winner: this.player2},
@@ -9,7 +9,8 @@ var game = {
         {number: 3, winner: this.player2},
     ],
     currentRound: 1,
-    winner: this.player2
+    winner: this.player2,
+    complete: false
 }
 
 game.getRandomGambit = function getRandomGambit() {
@@ -28,20 +29,35 @@ game.getRandomGambit = function getRandomGambit() {
 
 game.playRound = function playRound(input) {
 
-    var player1gambit = input;
-    var player2gambit = this.getRandomGambit();
-    var roundWinner = this.getRoundWinner(player1gambit, player2gambit);
+    if (!this.complete) {
+        var player1gambit = input;
+        var player2gambit = this.getRandomGambit();
 
-    this.rounds[this.currentRound - 1].winner = roundWinner;
+        var winner = this.getRoundWinner(player1gambit, player2gambit);
+        var winnerName = (winner == "draw") ? "draw" : winner.name;
 
-    displayRoundWinner(this.currentRound, player1gambit, player2gambit, roundWinner);
+        this.player1.wins = (winner === this.player1) ? this.player1.wins + 1 : this.player1.wins;
+        this.player2.wins = (winner === this.player2) ? this.player2.wins + 1 : this.player2.wins;
+        this.rounds[this.currentRound - 1].winner = winnerName;
 
-    if (this.currentRound < this.maxRounds) {
-        this.currentRound++
+        displayRoundWinner(this.currentRound, player1gambit, player2gambit, winnerName);
 
-    } else {
-        this.winner = this.getWinner();
-        displayWinner();
+        if (this.player1.wins == 2) {
+            this.complete = true;
+            this.winner = this.player1.name;
+            displayWinner();
+        } else if (this.player2.wins == 2) {
+            this.complete = true;
+            this.winner = this.player2.name;
+            displayWinner();
+        } else if (this.currentRound < this.maxRounds) {
+            this.currentRound++
+
+        } else {
+            this.complete = true;
+            this.winner = this.getWinner();
+            displayWinner();
+        }
     }
 }
 
@@ -84,13 +100,13 @@ game.getWinner = function getWinner() {
 
     var roundResults = this.rounds.map( round => round.winner );
 
-    var player1Wins = roundResults.filter( result => result === this.player1 ).length;
-    var player2Wins = roundResults.filter( result => result === this.player2 ).length;
+    var player1Wins = roundResults.filter( result => result === this.player1.name ).length;
+    var player2Wins = roundResults.filter( result => result === this.player2.name ).length;
 
     if (player1Wins > player2Wins) {
-        return this.player1;
+        return this.player1.name;
     } else if (player2Wins > player1Wins) {
-        return this.player2;
+        return this.player2.name;
     } else {
         return "draw";
     }
@@ -98,15 +114,18 @@ game.getWinner = function getWinner() {
 
 game.reset = function reset() {
     this.currentRound = 1;
+    this.player1.wins = 0;
+    this.player2.wins = 0;
     this.winner = this.player2;
     this.rounds.forEach( round => {
         round.winner = this.player2;
     });
+    this.complete = false;
 }
 
 function displayRoundWinner(currentRound, player1gambit, player2gambit, roundWinner) {
-    document.querySelector(".round"+currentRound+".player1choice").textContent = `${game.player1} selected: ${player1gambit}.`;
-    document.querySelector(".round"+currentRound+".player2choice").textContent = `${game.player2} selected: ${player2gambit}.`;
+    document.querySelector(".round"+currentRound+".player1choice").textContent = `${game.player1.name} selected: ${player1gambit}.`;
+    document.querySelector(".round"+currentRound+".player2choice").textContent = `${game.player2.name} selected: ${player2gambit}.`;
     document.querySelector(".round"+currentRound+".winner").textContent = `Round ${game.currentRound} winner: ${roundWinner}`;
 }
 
@@ -115,15 +134,13 @@ function displayWinner() {
 }
 
 function handleInput(evt) {
-    game.playRound(evt.target.getAttribute("data-playerInput"));
+    if(evt.target != document.querySelector(".reset")) {
+        game.playRound(evt.target.getAttribute("data-playerInput"));
+    }
 }
 
 function handleReset(evt) {
     game.reset();
-
-    document.querySelectorAll(".playerInput").forEach( button => {
-        removeEventListener("click", handleInput);
-    });
 
     var parapgraphs = document.querySelectorAll("p");
     parapgraphs.forEach( pElt => {
